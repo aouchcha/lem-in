@@ -8,14 +8,18 @@ import (
 )
 
 type Graph struct {
-	vertices []*Vertix
+	vertices []*Vertex
 }
 
-type Vertix struct {
+type Vertex struct {
 	vesited  int
 	Etat     string
 	value    string
-	adjecent []*Vertix
+	adjecent []*Vertex
+}
+
+type DFS struct {
+	Paths [][]string
 }
 
 func (g *Graph) AddVertix(v string, stat string) {
@@ -25,45 +29,44 @@ func (g *Graph) AddVertix(v string, stat string) {
 			return
 		}
 	}
-	g.vertices = append(g.vertices, &Vertix{value: v, Etat: stat})
+	g.vertices = append(g.vertices, &Vertex{value: v, Etat: stat})
 }
 
-func (g *Graph) AddPaths(from, to string) {
-	foundf := false
-	foundt := false
+func (g *Graph) GetVertex(value string) *Vertex {
 	for _, vertice := range g.vertices {
-		if vertice.value == from {
-			foundf = true
-			for _, vertice2 := range vertice.adjecent {
-				if vertice2.value == to {
-					foundt = true
-					fmt.Fprintf(os.Stderr, "There is already a relation between %s and %s\n", from, to)
-					return
-				}
-			}
+		if vertice.value == value || vertice.Etat == value {
+			return vertice
+		}
+	}
+	return nil
+}
+
+func (g *Graph) AddEdges(from, to string) {
+	if from == to {
+		return
+	}
+	fromv := g.GetVertex(from)
+	tov := g.GetVertex(to)
+
+	if fromv == nil || tov == nil {
+		if fromv == nil {
+			fmt.Fprintf(os.Stderr, "This vertex %s doesn't exist", from)
+			os.Exit(1)
+		} else {
+			fmt.Fprintf(os.Stderr, "This vertex %s doesn't exist", to)
+			os.Exit(1)
 		}
 	}
 
-	for _, vertice := range g.vertices {
-		if vertice.value == from {
-			foundf = true
-			for _, vertice2 := range g.vertices {
-				if vertice2.value == to {
-					foundt = true
-					vertice.adjecent = append(vertice.adjecent, vertice2)
-					vertice2.adjecent = append(vertice2.adjecent, vertice)
-				}
-			}
+	for _, jiran := range fromv.adjecent {
+		if jiran.value == to {
+			fmt.Fprintf(os.Stderr, "There is already a relation between %s and %s\n", from, to)
+			return
 		}
 	}
 
-	if !foundf {
-		fmt.Fprintf(os.Stderr, "There is no vertix with the name %s\n", from)
-		return
-	} else if !foundt {
-		fmt.Fprintf(os.Stderr, "There is no vertix with the name %s\n", to)
-		return
-	}
+	fromv.adjecent = append(fromv.adjecent, tov)
+	tov.adjecent = append(tov.adjecent, fromv)
 }
 
 func (g *Graph) Print() {
@@ -81,10 +84,13 @@ func (g *Graph) Print() {
 
 func main() {
 	gr := &Graph{}
-
+	paths := &DFS{}
 	CreatRoomsAndPaths(gr, TraitData())
 
-	gr.Print()
+	SearchInTheGraph(gr.GetVertex("start"))
+	fmt.Println(paths.Paths)
+
+	// gr.Print()
 }
 
 func TraitData() []string {
@@ -98,6 +104,8 @@ func TraitData() []string {
 }
 
 func CreatRoomsAndPaths(gr *Graph, lines []string) {
+	start := 0
+	end := 0
 	var roomes []string
 	var links []string
 	for i := 1; i < len(lines); i++ {
@@ -107,22 +115,17 @@ func CreatRoomsAndPaths(gr *Graph, lines []string) {
 			links = append(links, lines[i])
 		}
 	}
-	// for i := range roomes {
-	// 	fmt.Println(roomes[i])
-	// }
-	// fmt.Println(links)
+
 	for i := 0; i < len(roomes); i++ {
-		// fmt.Println(roomes[i])
 		if strings.HasPrefix(roomes[i], "#") && (roomes[i] != "##start" && roomes[i] != "##end") {
 			continue
 		} else if roomes[i] == "##start" || roomes[i] == "##end" {
 			sli := Check_Coord(roomes[i+1], i+1)
-			if len(sli) != 3 || sli[0] == " " || sli[0] == "#" || sli[0] == "L" {
-				fmt.Fprintf(os.Stderr, "Bad Data in line %d", i+1)
-			}
 			if roomes[i] == "##start" {
+				start++
 				gr.AddVertix(sli[0], "start")
 			} else {
+				end++
 				gr.AddVertix(sli[0], "end")
 			}
 			i++
@@ -130,6 +133,10 @@ func CreatRoomsAndPaths(gr *Graph, lines []string) {
 			sli := Check_Coord(roomes[i], i)
 			gr.AddVertix(sli[0], "standard")
 		}
+	}
+	if start != 1 || end != 1 {
+		fmt.Fprintln(os.Stderr, "You give more than one start or end check your file !!!")
+		os.Exit(1)
 	}
 
 	for i := 0; i < len(links); i++ {
@@ -139,7 +146,7 @@ func CreatRoomsAndPaths(gr *Graph, lines []string) {
 			fmt.Fprintf(os.Stderr, "Bad Data on links in line %s\n", links[i])
 			continue
 		}
-		gr.AddPaths(sli[0], sli[1])
+		gr.AddEdges(sli[0], sli[1])
 
 	}
 }
@@ -147,8 +154,13 @@ func CreatRoomsAndPaths(gr *Graph, lines []string) {
 func Check_Coord(str string, i int) []string {
 	sli := strings.Split(str, " ")
 	if len(sli) != 3 || sli[0] == " " || sli[0] == "#" || sli[0] == "L" {
-		fmt.Fprintf(os.Stderr, "Bad Data on normal cordinat in line %d\n", i+1)
-		os.Exit(1)
+		if sli[0] == "##start" || sli[0] == "##end" {
+			fmt.Fprintln(os.Stderr, "You give more than one start or end check your file !!!")
+			os.Exit(1)
+		} else {
+			fmt.Fprintf(os.Stderr, "Bad Data in line %d\n", i+2)
+			os.Exit(1)
+		}
 	}
 	_, err1 := strconv.Atoi(sli[1])
 	_, err2 := strconv.Atoi(sli[2])
@@ -157,4 +169,23 @@ func Check_Coord(str string, i int) []string {
 		os.Exit(1)
 	}
 	return sli
+}
+
+var temppath []string
+func SearchInTheGraph(current *Vertex) {
+	path := &DFS{}
+	current.vesited = 1
+	for _,jar := range current.adjecent{
+		if jar.vesited == 1 {
+			continue
+		}else if jar.Etat == "end"{
+			temppath = append(temppath, jar.value)
+			path.Paths = append(path.Paths, temppath)
+			fmt.Println(temppath)
+			temppath = []string{}
+		}else{
+			temppath = append(temppath, current.value)
+			SearchInTheGraph(jar)
+		}
+	}
 }
