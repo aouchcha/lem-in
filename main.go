@@ -96,15 +96,15 @@ func main() {
 	SearchInTheGraph(gr.GetVertex("start"), paths, path)
 	paths.SortPaths()
 	ChooseUniquePaths(paths)
-	// fmt.Println("PATHS :")
-	// for i, p := range paths.Paths {
-	// 	fmt.Println(i, p)
-	// }
-	// fmt.Println("-----------------------------------------------------------------------")
-	// fmt.Println("UNIQUE PATHS :")
-	// for i, p := range paths.Unique_Paths {
-	// 	fmt.Println(i, p)
-	// }
+	fmt.Println("PATHS :")
+	for i, p := range paths.Paths {
+		fmt.Println(i, p)
+	}
+	fmt.Println("-----------------------------------------------------------------------")
+	fmt.Println("UNIQUE PATHS :")
+	for i, p := range paths.Unique_Paths {
+		fmt.Println(i, p)
+	}
 }
 
 func TraitData() []string {
@@ -220,13 +220,10 @@ func CheckRepition(arr1 [][]string, arr2 []string) bool {
 	for i := 0; i < len(arr1); i++ {
 		for j := 1; j < len(arr1[i])-1; j++ {
 			element[arr1[i][j]] = "y"
-			fmt.Println(element)
 		}
 	}
 
 	for i := 1; i < len(arr2)-1; i++ {
-		fmt.Println(arr2)
-		fmt.Println(arr2[i])
 		if _, exist := element[arr2[i]]; exist {
 			return true
 		}
@@ -245,26 +242,16 @@ func (paths *DFS) SortPaths() {
 }
 
 func ChooseUniquePaths(paths *DFS) {
-	remove := []int{}
-	// fmt.Println(paths.Paths[1])
 
 	for i := 0; i < len(paths.Paths); i++ {
 		unique := [][]string{}
 		unique = append(unique, paths.Paths[i])
 
-		for j := 0; j < len(unique); j++ {
-			// fmt.Println(unique)
-			// fmt.Println(paths.Paths[i])
-			if CheckRepition(unique, paths.Paths[j]) || j == i {
-				continue
-			} else {
+		for j := 0; j < len(paths.Paths); j++ {
+			if i != j && !CheckRepition(unique, paths.Paths[j])  {
 				unique = append(unique, paths.Paths[j])
-				remove = append(remove, j)
 			}
-			// if len(unique) != 0 {
-			// 	paths.Unique_Paths = append(paths.Unique_Paths, unique)
-			// }
 		}
+		paths.Unique_Paths = append(paths.Unique_Paths, unique)
 	}
-	fmt.Println(remove)
 }
