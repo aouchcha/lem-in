@@ -1,34 +1,9 @@
-10
-##start
-start 1 6
-0 4 8
-o 6 8
-n 6 6
-e 8 4
-t 1 9
-E 5 9
-a 8 9
-m 8 6
-h 4 6
-A 5 2
-c 8 1
-k 11 2
-##end
-end 11 6
-start-t
-n-e
-a-m
-A-c
-0-o
-E-a
-k-end
-start-h
-o-n
-m-end
-t-E
-start-0
-h-A
-e-end
-c-k
-n-m
-h-n
+0 [[start t E a m n h A c k end]]
+1 [[start h n m end]]
+2 [[start h n e end] [start t E a m end]]
+3 [[start t E a m n e end] [start h A c k end]]
+4 [[start 0 o n m end] [start h A c k end]]
+5 [[start 0 o n h A c k end] [start t E a m end]]
+6 [[start 0 o n e end] [start t E a m end] [start h A c k end]]
+7 [[start t E a m end] [start h A c k end] [start 0 o n e end]]
+8 [[start h A c k end] [start t E a m end] [start 0 o n e end]]

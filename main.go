@@ -94,13 +94,16 @@ func main() {
 	var path []string
 	// fmt.Println(gr.Number_of_rooms)
 	SearchInTheGraph(gr.GetVertex("start"), paths, path)
+	// paths.SortPaths()
+	FilterUniquePaths(paths)
 	paths.SortPaths()
-	ChooseUniquePaths(paths)
-	fmt.Println("PATHS :")
-	for i, p := range paths.Paths {
-		fmt.Println(i, p)
-	}
-	fmt.Println("-----------------------------------------------------------------------")
+	fmt.Println(gr.Ants)
+	// ChooseTheBestGroupe(paths,gr.Ants)
+	// fmt.Println("PATHS :")
+	// for i, p := range paths.Paths {
+	// 	fmt.Println(i, p)
+	// }
+	// fmt.Println("-----------------------------------------------------------------------")
 	fmt.Println("UNIQUE PATHS :")
 	for i, p := range paths.Unique_Paths {
 		fmt.Println(i, p)
@@ -239,19 +242,58 @@ func (paths *DFS) SortPaths() {
 			}
 		}
 	}
+
+	for i := 0; i < len(paths.Unique_Paths)-1; i++ {
+		for j := i + 1; j < len(paths.Unique_Paths); j++ {
+			if len(paths.Unique_Paths[i]) > len(paths.Unique_Paths[j]) {
+				paths.Unique_Paths[i], paths.Unique_Paths[j] = paths.Unique_Paths[j], paths.Unique_Paths[i]
+			}
+		}
+	}
 }
 
-func ChooseUniquePaths(paths *DFS) {
-
+func FilterUniquePaths(paths *DFS) {
 	for i := 0; i < len(paths.Paths); i++ {
 		unique := [][]string{}
 		unique = append(unique, paths.Paths[i])
 
 		for j := 0; j < len(paths.Paths); j++ {
-			if i != j && !CheckRepition(unique, paths.Paths[j])  {
+			if i != j && !CheckRepition(unique, paths.Paths[j]) {
 				unique = append(unique, paths.Paths[j])
 			}
 		}
 		paths.Unique_Paths = append(paths.Unique_Paths, unique)
 	}
 }
+
+// func ChooseTheBestGroupe(paths *DFS, ants int) {
+// 	var BestGroupe [][][]string
+// 	var BestPath [][][]string
+// 	best := len(paths.Unique_Paths[0])%ants
+// 	for i := 0; i< len(paths.Unique_Paths); i++ {
+// 		// fmt.Println(ants,paths.Unique_Paths[i],best, len(paths.Unique_Paths[i])%ants)
+// 		if len(paths.Unique_Paths[i])%ants > best || len(paths.Unique_Paths[i])%ants == 0 {
+// 			BestGroupe = [][][]string{}
+// 			BestGroupe = append(BestGroupe, paths.Unique_Paths[i])
+// 			best = len(paths.Unique_Paths[i])%ants
+// 		}else if len(paths.Unique_Paths[i])%ants == best {
+// 			BestGroupe = append(BestGroupe, paths.Unique_Paths[i])
+// 		}
+// 	}
+// 	// fmt.Println(BestGroupe[0])
+// 	mark := 0
+// 	count := 1000000
+// 	for i := 0; i < len(BestGroupe); i++ {
+// 		temp := 0
+// 		for j:=0; j < len(BestGroupe[i]); j++ {
+// 			temp ++
+// 		}
+// 		if temp < count {
+// 			count = temp
+// 			mark = i
+// 		}
+// 		fmt.Println("------------------")
+// 	}
+// 	BestPath = append(BestPath, BestGroupe[mark])
+// 	fmt.Println((BestPath))
+// }
