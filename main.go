@@ -23,6 +23,7 @@ type Vertex struct {
 type DFS struct {
 	Paths        [][]string
 	Unique_Paths [][][]string
+	BestPath     [][][]string
 }
 
 func (g *Graph) AddVertix(v string, stat string) {
@@ -90,23 +91,54 @@ func main() {
 	gr := &Graph{}
 	paths := &DFS{}
 	CreatRoomsAndPaths(gr, TraitData())
-	// gr.Print()
 	var path []string
-	// fmt.Println(gr.Number_of_rooms)
 	SearchInTheGraph(gr.GetVertex("start"), paths, path)
-	// paths.SortPaths()
 	FilterUniquePaths(paths)
-	paths.SortPaths()
-	fmt.Println(gr.Ants)
-	// ChooseTheBestGroupe(paths,gr.Ants)
+	if len(paths.Unique_Paths) == 0 {
+		fmt.Fprintln(os.Stderr, "All The rooms are linked beetwen them self's or there is not any relation")
+		os.Exit(1)
+	}
+	ChooseTheBestGroupe(paths, gr.Ants)
+	fmt.Println(SortPaths(paths))
+	Sri7Nmel(SortPaths(paths), gr.Ants)
+
 	// fmt.Println("PATHS :")
 	// for i, p := range paths.Paths {
 	// 	fmt.Println(i, p)
 	// }
 	// fmt.Println("-----------------------------------------------------------------------")
-	fmt.Println("UNIQUE PATHS :")
-	for i, p := range paths.Unique_Paths {
-		fmt.Println(i, p)
+	// fmt.Println("UNIQUE PATHS :")
+	// for i, p := range paths.Unique_Paths {
+	// 	fmt.Println(i, p)
+	// }
+}
+
+func Sri7Nmel(final_path [][]string, ants int) {
+	num := ants
+	fmt.Println(final_path)
+	temp := []int{}
+	for i := 0; i < len(final_path); i++ {
+		temp = append(temp, len(final_path[i]))
+	}
+
+	for i := 0; i < len(final_path)-1; i++ {
+		if ants == 0 {
+			break
+		}
+		if temp[i] < temp[i+1] {
+			for k :=0; k < len(final_path[i]); k++ {
+				if k > num-ants{
+					continue
+				}
+				for j := 0; j <= num-ants; j++ {
+					fmt.Printf("L%d-%s ", j,final_path[i][k])
+					
+				}
+			}
+			fmt.Println()
+			temp[i]++
+			ants--
+		}
 	}
 }
 
@@ -116,13 +148,14 @@ func TraitData() []string {
 		fmt.Fprintln(os.Stderr, "We can't read the file")
 		os.Exit(1)
 	}
+
 	lines := strings.Split(string(content), "\n")
 	return lines
 }
 
 func CreatRoomsAndPaths(gr *Graph, lines []string) {
 	NmAnts, err := strconv.Atoi(lines[0])
-	if err != nil {
+	if err != nil || NmAnts <= 0 {
 		fmt.Fprintln(os.Stderr, "Invalide ants number")
 		os.Exit(1)
 	}
@@ -211,7 +244,9 @@ func SearchInTheGraph(current *Vertex, paths *DFS, path []string) {
 					Temp_Path = Temp_Path[:len(Temp_Path)-1]
 				}
 			}
-			Temp_Path = append(Temp_Path, current.value)
+			if current.Etat != "start" {
+				Temp_Path = append(Temp_Path, current.value)
+			}
 			SearchInTheGraph(jar, paths, Temp_Path)
 		}
 	}
@@ -221,12 +256,12 @@ func SearchInTheGraph(current *Vertex, paths *DFS, path []string) {
 func CheckRepition(arr1 [][]string, arr2 []string) bool {
 	element := make(map[string]string)
 	for i := 0; i < len(arr1); i++ {
-		for j := 1; j < len(arr1[i])-1; j++ {
+		for j := 0; j < len(arr1[i])-1; j++ {
 			element[arr1[i][j]] = "y"
 		}
 	}
 
-	for i := 1; i < len(arr2)-1; i++ {
+	for i := 0; i < len(arr2)-1; i++ {
 		if _, exist := element[arr2[i]]; exist {
 			return true
 		}
@@ -234,22 +269,26 @@ func CheckRepition(arr1 [][]string, arr2 []string) bool {
 	return false
 }
 
-func (paths *DFS) SortPaths() {
-	for i := 0; i < len(paths.Paths)-1; i++ {
-		for j := i + 1; j < len(paths.Paths); j++ {
-			if len(paths.Paths[i]) > len(paths.Paths[j]) {
-				paths.Paths[i], paths.Paths[j] = paths.Paths[j], paths.Paths[i]
+func SortPaths(paths *DFS) [][]string {
+	best := make([][][]string, len(paths.BestPath))
+	copy(best, paths.BestPath)
+	rus := [][]string{}
+	for i := 0; i < len(best); i++ {
+		for j := 0; j < len(best[i])-1; j++ {
+			for k := j + 1; k < len(best[i]); k++ {
+				if len(best[i][j]) > len(best[i][k]) {
+					best[i][j], best[i][k] = best[i][k], best[i][j]
+				}
 			}
 		}
 	}
 
-	for i := 0; i < len(paths.Unique_Paths)-1; i++ {
-		for j := i + 1; j < len(paths.Unique_Paths); j++ {
-			if len(paths.Unique_Paths[i]) > len(paths.Unique_Paths[j]) {
-				paths.Unique_Paths[i], paths.Unique_Paths[j] = paths.Unique_Paths[j], paths.Unique_Paths[i]
-			}
+	for i := 0; i < len(best); i++ {
+		for j := 0; j < len(best[i]); j++ {
+			rus = append(rus, best[i][j])
 		}
 	}
+	return rus
 }
 
 func FilterUniquePaths(paths *DFS) {
@@ -266,34 +305,37 @@ func FilterUniquePaths(paths *DFS) {
 	}
 }
 
-// func ChooseTheBestGroupe(paths *DFS, ants int) {
-// 	var BestGroupe [][][]string
-// 	var BestPath [][][]string
-// 	best := len(paths.Unique_Paths[0])%ants
-// 	for i := 0; i< len(paths.Unique_Paths); i++ {
-// 		// fmt.Println(ants,paths.Unique_Paths[i],best, len(paths.Unique_Paths[i])%ants)
-// 		if len(paths.Unique_Paths[i])%ants > best || len(paths.Unique_Paths[i])%ants == 0 {
-// 			BestGroupe = [][][]string{}
-// 			BestGroupe = append(BestGroupe, paths.Unique_Paths[i])
-// 			best = len(paths.Unique_Paths[i])%ants
-// 		}else if len(paths.Unique_Paths[i])%ants == best {
-// 			BestGroupe = append(BestGroupe, paths.Unique_Paths[i])
-// 		}
-// 	}
-// 	// fmt.Println(BestGroupe[0])
-// 	mark := 0
-// 	count := 1000000
-// 	for i := 0; i < len(BestGroupe); i++ {
-// 		temp := 0
-// 		for j:=0; j < len(BestGroupe[i]); j++ {
-// 			temp ++
-// 		}
-// 		if temp < count {
-// 			count = temp
-// 			mark = i
-// 		}
-// 		fmt.Println("------------------")
-// 	}
-// 	BestPath = append(BestPath, BestGroupe[mark])
-// 	fmt.Println((BestPath))
-// }
+func ChooseTheBestGroupe(paths *DFS, ants int) {
+	// fmt.Println("ants", paths.Unique_Paths)
+	var BestGroupe [][][]string
+	var BestPath [][][]string
+	best := len(paths.Unique_Paths[0]) % ants
+	// temp := best
+	// fmt.Println(best)
+	for i := 0; i < len(paths.Unique_Paths); i++ {
+		// fmt.Println(ants,paths.Unique_Paths[i],best, len(paths.Unique_Paths[i])%ants)
+		if len(paths.Unique_Paths[i])%ants == best {
+			BestGroupe = append(BestGroupe, paths.Unique_Paths[i])
+		} else if len(paths.Unique_Paths[i])%ants > best || len(paths.Unique_Paths[i])%ants == 0 {
+			BestGroupe = [][][]string{}
+			BestGroupe = append(BestGroupe, paths.Unique_Paths[i])
+			best = len(paths.Unique_Paths[i]) % ants
+			// fmt.Println(BestGroupe)
+		}
+	}
+	mark := 0
+	count := 1000000
+	for i := 0; i < len(BestGroupe); i++ {
+		temp := 0
+		for j := 0; j < len(BestGroupe[i]); j++ {
+			temp++
+		}
+		if temp < count {
+			count = temp
+			mark = i
+		}
+		// fmt.Println("------------------")
+	}
+	BestPath = append(BestPath, BestGroupe[mark])
+	paths.BestPath = BestPath
+}
