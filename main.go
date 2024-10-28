@@ -23,7 +23,7 @@ type Vertex struct {
 type DFS struct {
 	Paths        [][]string
 	Unique_Paths [][][]string
-	BestPath     [][][]string
+	BestPath     [][]string
 }
 
 func (g *Graph) AddVertix(v string, stat string) {
@@ -90,18 +90,31 @@ func (g *Graph) Print() {
 func main() {
 	gr := &Graph{}
 	paths := &DFS{}
+
 	CreatRoomsAndPaths(gr, TraitData())
 	var path []string
 	SearchInTheGraph(gr.GetVertex("start"), paths, path)
+	// fmt.Println(paths.Paths)
+	SortPaths(paths)
+	// fmt.Println(paths.Paths[0])
 	FilterUniquePaths(paths)
+	// fmt.Println(paths.Unique_Paths)
 	if len(paths.Unique_Paths) == 0 {
 		fmt.Fprintln(os.Stderr, "All The rooms are linked beetwen them self's or there is not any relation")
 		os.Exit(1)
 	}
-	ChooseTheBestGroupe(paths, gr.Ants)
-	fmt.Println(SortPaths(paths))
-	Sri7Nmel(SortPaths(paths), gr.Ants)
+	// fmt.Println(paths.Unique_Paths)
 
+	ChooseTheBestGroupe(paths, gr.Ants)
+	for i := 0; i < len(paths.BestPath); i++ {
+		sli := []string{gr.GetVertex("start").value}
+		sli = append(sli, paths.BestPath[i]...)
+		paths.BestPath[i] = sli
+	}
+	// fmt.Println(paths.BestPath)
+	// dis := distributeAnts(paths.BestPath, gr.Ants)
+	// fmt.Println(paths.BestPath, distributeAnts(paths.BestPath, gr.Ants))
+	simulateAntMovement(paths.BestPath, distributeAnts(paths.BestPath, gr.Ants))
 	// fmt.Println("PATHS :")
 	// for i, p := range paths.Paths {
 	// 	fmt.Println(i, p)
@@ -113,34 +126,34 @@ func main() {
 	// }
 }
 
-func Sri7Nmel(final_path [][]string, ants int) {
-	num := ants
-	fmt.Println(final_path)
-	temp := []int{}
-	for i := 0; i < len(final_path); i++ {
-		temp = append(temp, len(final_path[i]))
-	}
+// func Sri7Nmel(final_path [][]string, ants int) {
+// 	num := ants
+// 	fmt.Println(final_path)
+// 	temp := []int{}
+// 	for i := 0; i < len(final_path); i++ {
+// 		temp = append(temp, len(final_path[i]))
+// 	}
 
-	for i := 0; i < len(final_path)-1; i++ {
-		if ants == 0 {
-			break
-		}
-		if temp[i] < temp[i+1] {
-			for k :=0; k < len(final_path[i]); k++ {
-				if k > num-ants{
-					continue
-				}
-				for j := 0; j <= num-ants; j++ {
-					fmt.Printf("L%d-%s ", j,final_path[i][k])
-					
-				}
-			}
-			fmt.Println()
-			temp[i]++
-			ants--
-		}
-	}
-}
+// 	for i := 0; i < len(final_path)-1; i++ {
+// 		if ants == 0 {
+// 			break
+// 		}
+// 		if temp[i] < temp[i+1] {
+// 			for k :=0; k < len(final_path[i]); k++ {
+// 				if k > num-ants{
+// 					continue
+// 				}
+// 				for j := 0; j <= num-ants; j++ {
+// 					fmt.Printf("L%d-%s ", j,final_path[i][k])
+
+// 				}
+// 			}
+// 			fmt.Println()
+// 			temp[i]++
+// 			ants--
+// 		}
+// 	}
+// }
 
 func TraitData() []string {
 	content, err := os.ReadFile("test.txt")
@@ -269,26 +282,14 @@ func CheckRepition(arr1 [][]string, arr2 []string) bool {
 	return false
 }
 
-func SortPaths(paths *DFS) [][]string {
-	best := make([][][]string, len(paths.BestPath))
-	copy(best, paths.BestPath)
-	rus := [][]string{}
-	for i := 0; i < len(best); i++ {
-		for j := 0; j < len(best[i])-1; j++ {
-			for k := j + 1; k < len(best[i]); k++ {
-				if len(best[i][j]) > len(best[i][k]) {
-					best[i][j], best[i][k] = best[i][k], best[i][j]
-				}
+func SortPaths(paths *DFS) {
+	for i := 0; i < len(paths.Paths); i++ {
+		for j := i + 1; j < len(paths.Paths); j++ {
+			if len(paths.Paths[i]) > len(paths.Paths[j]) {
+				paths.Paths[i], paths.Paths[j] = paths.Paths[j], paths.Paths[i]
 			}
 		}
 	}
-
-	for i := 0; i < len(best); i++ {
-		for j := 0; j < len(best[i]); j++ {
-			rus = append(rus, best[i][j])
-		}
-	}
-	return rus
 }
 
 func FilterUniquePaths(paths *DFS) {
@@ -308,34 +309,101 @@ func FilterUniquePaths(paths *DFS) {
 func ChooseTheBestGroupe(paths *DFS, ants int) {
 	// fmt.Println("ants", paths.Unique_Paths)
 	var BestGroupe [][][]string
-	var BestPath [][][]string
+	// var BestPath [][][]string
 	best := len(paths.Unique_Paths[0]) % ants
-	// temp := best
-	// fmt.Println(best)
 	for i := 0; i < len(paths.Unique_Paths); i++ {
-		// fmt.Println(ants,paths.Unique_Paths[i],best, len(paths.Unique_Paths[i])%ants)
 		if len(paths.Unique_Paths[i])%ants == best {
 			BestGroupe = append(BestGroupe, paths.Unique_Paths[i])
-		} else if len(paths.Unique_Paths[i])%ants > best || len(paths.Unique_Paths[i])%ants == 0 {
-			BestGroupe = [][][]string{}
+		} else if (len(paths.Unique_Paths[i])%ants > best) || len(paths.Unique_Paths[i])%ants == 0 {
 			BestGroupe = append(BestGroupe, paths.Unique_Paths[i])
 			best = len(paths.Unique_Paths[i]) % ants
-			// fmt.Println(BestGroupe)
 		}
 	}
-	mark := 0
-	count := 1000000
+	// fmt.Println(BestGroupe)
+	best = len(BestGroupe[0])%ants + ants/len(BestGroupe[0])
 	for i := 0; i < len(BestGroupe); i++ {
-		temp := 0
-		for j := 0; j < len(BestGroupe[i]); j++ {
-			temp++
+		// fmt.Println(BestGroupe[i], ants/len(BestGroupe[i]), ants%len(BestGroupe[i]))
+		if len(BestGroupe[i])%ants+ants/len(BestGroupe[i]) < best {
+			paths.BestPath = BestGroupe[i]
 		}
-		if temp < count {
-			count = temp
-			mark = i
-		}
-		// fmt.Println("------------------")
 	}
-	BestPath = append(BestPath, BestGroupe[mark])
-	paths.BestPath = BestPath
+	// fmt.Println(len(paths.BestPath))
+	if len(paths.BestPath) == 0 {
+		paths.BestPath = BestGroupe[0]
+	}
+}
+
+func distributeAnts(paths [][]string, ants int) [][]int {
+	antDistribution := make([][]int, len(paths))
+
+	pathLengths := make([]int, len(paths))
+	for i, path := range paths {
+		pathLengths[i] = len(path)
+	}
+	//fmt.Println(pathLengths)
+
+	antNum := 0
+	for antNum < ants {
+		assigned := false
+		for i := 0; i < len(paths)-1; i++ {
+			currentPathLength := pathLengths[i] + len(antDistribution[i])
+			nextPathLength := pathLengths[i+1] + len(antDistribution[i+1])
+
+			if currentPathLength <= nextPathLength {
+				antDistribution[i] = append(antDistribution[i], antNum)
+				assigned = true
+				break
+			}
+		}
+
+		if !assigned {
+			antDistribution[len(paths)-1] = append(antDistribution[len(paths)-1], antNum)
+		}
+		antNum++
+	}
+
+	return antDistribution
+}
+func simulateAntMovement(paths [][]string, antDistribution [][]int) {
+	type AntPosition struct {
+		ant  int
+		path int
+		step int
+	}
+
+	var antPositions []AntPosition
+	for pathIndex, ants := range antDistribution {
+		for _, ant := range ants {
+			antPositions = append(antPositions, AntPosition{ant, pathIndex, 0})
+		}
+	}
+
+	moveCount := 0
+	for len(antPositions) > 0 {
+		var moves []string
+		var newPositions []AntPosition
+		usedLinks := make(map[string]bool)
+
+		for _, pos := range antPositions {
+			if pos.step < len(paths[pos.path])-1 {
+				currentRoom := paths[pos.path][pos.step]
+				nextRoom := paths[pos.path][pos.step+1]
+				link := currentRoom + "-" + nextRoom
+				if !usedLinks[link] {
+					moves = append(moves, fmt.Sprintf("L%d-%s", pos.ant+1, nextRoom))
+					newPositions = append(newPositions, AntPosition{pos.ant, pos.path, pos.step + 1})
+					usedLinks[link] = true
+				} else {
+					newPositions = append(newPositions, pos)
+				}
+			}
+		}
+		if len(moves) > 0 {
+			fmt.Println(strings.Join(moves, " "))
+		}
+		antPositions = newPositions
+		moveCount++
+	}
+	fmt.Println("---------------------------------------------------------------------------------------")
+	fmt.Printf("Nombre de mouvements : %d\n", moveCount-1)
 }
